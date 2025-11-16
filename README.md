@@ -171,7 +171,9 @@
 
 ## 🔌 Configuration MCP (Model Context Protocol)
 
-### MCP pour Qwen 2.5 Coder 3B
+> 📖 **Documentation complète**: Voir [MCP-CONFIGURATION.md](./MCP-CONFIGURATION.md) pour tous les détails
+
+### MCP Locaux - Qwen 2.5 Coder 3B
 
 Les serveurs MCP suivants sont configurés et actifs pour l'orchestrateur Qwen :
 
@@ -243,6 +245,23 @@ Les serveurs MCP suivants sont configurés et actifs pour l'orchestrateur Qwen :
 - Créer/modifier workflows
 - Valider configurations
 - Détecter erreurs de configuration
+
+---
+
+### MCP Distant - Windows 10
+
+**VPS MCP Server v3** permet l'accès distant au VPS depuis Claude Desktop (Windows 10).
+
+**7 outils disponibles**:
+- `execute_command` - Commandes SSH
+- `list_docker_containers` - Monitoring Docker
+- `check_docker_logs` - Logs conteneurs
+- `restart_docker_container` - Redémarrage
+- `check_system_resources` - Ressources système
+- `diagnose_vps` - Diagnostic complet
+- `query_postgres` - Requêtes PostgreSQL
+
+📖 **Configuration détaillée**: Voir [MCP-CONFIGURATION.md](./MCP-CONFIGURATION.md#-mcp-pour-accès-distant-au-vps-windows-10)
 
 ---
 
@@ -321,6 +340,7 @@ docker logs -f n8n-worker-2-prod
 - ✅ Suppression automatique données audio (RGPD)
 - ✅ Base de données PostgreSQL isolée
 - ✅ Redis protégé en réseau interne Docker
+- ✅ VPS MCP Server v3: authentification SSH par clé
 
 ### Services Sécurisés
 - `mcp-sandbox.service` - Validation MCP en environnement isolé
@@ -345,5 +365,5 @@ docker logs -f n8n-worker-2-prod
 
 ---
 
-**Dernière mise à jour**: 2025-11-15  
+**Dernière mise à jour**: 2025-11-16  
 **Mainteneur**: Christophe @ AuraStackAI
