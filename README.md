@@ -5,11 +5,28 @@
 ## 📋 Table des matières
 
 - [Caractéristiques Système](#caractéristiques-système)
+- [Audit & Sécurité](#audit--sécurité)
 - [Services Docker](#services-docker)
 - [Services Systemd](#services-systemd)
 - [Workflows n8n Actifs](#workflows-n8n-actifs)
 - [Configuration MCP (Model Context Protocol)](#configuration-mcp)
 - [Modèles IA Disponibles](#modèles-ia-disponibles)
+
+---
+
+## 🛡️ Audit & Sécurité
+
+Un audit complet de l'infrastructure a été réalisé le 28/11/2025.
+👉 **[Consulter le Rapport d'Audit Complet](./AUDIT_REPORT.md)**
+
+### Actions de Durcissement
+Un script d'automatisation est disponible pour appliquer les bonnes pratiques de sécurité (UFW, Fail2Ban, SSH Hardening).
+
+```bash
+# Appliquer le durcissement
+chmod +x scripts/harden_vps.sh
+sudo ./scripts/harden_vps.sh
+```
 
 ---
 
