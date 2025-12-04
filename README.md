@@ -10,7 +10,7 @@ Deploy autonomous AI workflows with N8N orchestration, local LLMs (Ollama/Qwen/P
 
 ---
 
-## 🎯 Why This Stack?
+## Key Features
 
 ### Data Sovereignty
 - 100% local LLM inference (no cloud dependencies)
@@ -30,7 +30,7 @@ Deploy autonomous AI workflows with N8N orchestration, local LLMs (Ollama/Qwen/P
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```mermaid
 graph TB
@@ -56,8 +56,8 @@ graph TB
     
     subgraph "AuraCore Consensus Engine"
         AURACORE[AuraCore API]
-        DIAGNOSIS[Qwen Diagnosis]
-        VALIDATION[Phi-3 Validation]
+        QWEN -->|Diagnosis| AURACORE
+        PHI3 -->|Validation| AURACORE
     end
     
     subgraph "Data Layer"
@@ -67,7 +67,7 @@ graph TB
     
     subgraph "MCP Integration"
         MCP_VPS[VPS MCP Server]
-        MCP_LOCAL[AuraCore MCP Local]
+        MCP_LOCAL[AuraCore MCP - Local]
     end
     
     TG --> N8N_MAIN
@@ -78,19 +78,16 @@ graph TB
     REDIS --> N8N_W1
     REDIS --> N8N_W2
     
-    N8N_W1 --> AURACORE
-    AURACORE --> DIAGNOSIS
-    AURACORE --> VALIDATION
-    DIAGNOSIS --> QWEN
-    VALIDATION --> PHI3
+    N8N_W1 --> OLLAMA
+    N8N_W2 --> OLLAMA
+    N8N_MAIN --> PG
+    N8N_W1 --> QDRANT
     
     OLLAMA --> QWEN
     OLLAMA --> PHI3
     OLLAMA --> LLAVA
     
-    N8N_MAIN --> PG
-    N8N_W1 --> QDRANT
-    
+    AURACORE --> N8N_MAIN
     MCP_VPS -.SSH.-> N8N_MAIN
     
     style N8N_MAIN fill:#4CAF50
@@ -101,116 +98,41 @@ graph TB
 
 ---
 
-## ✨ Key Features
+## AI Models
 
-### 🔄 N8N Queue Mode
+| Model | Size | Purpose |
+|-------|------|--------|
+| **Qwen 2.5 Coder 3B** | 1.9GB | Primary diagnostic LLM - analyzes logs, errors, infrastructure issues |
+| **Phi-3 Mini 3.8B** | 2.2GB | Validation LLM - validates Qwen's diagnoses for consensus decisions |
+| **LLaVA** | 4.7GB | Vision model for screenshot/image analysis |
+
+### Consensus Engine (Double LLM Validation)
+
+For critical infrastructure decisions, AuraCore uses a **dual-LLM consensus system**:
+
+1. **Qwen** analyzes the incident and proposes diagnosis + action
+2. **Phi-3** validates the diagnosis independently
+3. **Consensus computed**: AGREED / PARTIAL / DISAGREED
+4. Auto-execution only if both LLMs agree with high confidence
+
+See **[AURACORE-MCP.md](./AURACORE-MCP.md)** for full documentation.
+
+---
+
+## N8N Queue Mode
 - Distributed execution with Redis-backed queue
 - Horizontal scaling with multiple workers
 - PostgreSQL for workflow persistence
 
-### 🤖 Local LLM Inference (Dual Model)
-- **Qwen 2.5 Coder 3B** - Primary diagnostic model (code-optimized)
-- **Phi-3 Mini 3.8B** - Validation model (reasoning-optimized)
-- CPU-optimized for cost-effective deployment
-- No external API dependencies
-
-### 🧠 AuraCore Consensus Engine
-- Dual-LLM validation for infrastructure decisions
-- JSON-structured communication between models
-- Confidence scoring and risk assessment
-- Auto-execute safe actions, escalate risky ones
-
-### 🧠 Vector Memory (RAG)
+## Vector Memory (RAG)
 - Qdrant vector database for embeddings
 - Semantic search for incident history
 - Persistent knowledge base
 
-### 🔌 Model Context Protocol (MCP)
-- Remote VPS control from Claude Desktop
-- Local MCP servers for AI agents
-- N8N workflow automation via MCP
-- **AuraCore MCP** for project/context management
+## MCP Integration
 
-### 🛡️ Security Hardening
-- Automated security setup script
-- UFW firewall configuration
-- Fail2Ban intrusion prevention
-- SSH key-only authentication
-
-### 💾 Automated Backups
-- Daily PostgreSQL dumps
-- 7-day retention policy
-- Configurable backup rotation
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Debian/Ubuntu server (12 vCPUs, 45GB RAM recommended)
-- Docker & Docker Compose installed
-- SSH access with key authentication
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/AuraStackAI-Agency/VPS-debian.git
-cd VPS-debian
-```
-
-### 2. Configure Environment
-```bash
-cp examples/.env.example .env
-# Edit .env with your configuration
-nano .env
-```
-
-### 3. Deploy the Stack
-```bash
-docker-compose -f examples/docker-compose.example.yml up -d
-```
-
-### 4. Apply Security Hardening
-```bash
-chmod +x scripts/harden_vps.sh
-sudo ./scripts/harden_vps.sh
-```
-
-### 5. Setup Automated Backups
-```bash
-chmod +x scripts/setup_automated_backups.sh
-sudo ./scripts/setup_automated_backups.sh
-```
-
----
-
-## 📚 Documentation
-
-- **[Architecture Deep Dive](./ARCHITECTURE.md)** - Detailed system design
-- **[MCP Integration Guide](./MCP-GUIDE.md)** - Remote VPS control from Claude Desktop
-- **[AuraCore MCP Guide](./AURACORE-MCP.md)** - Project & context management for AI agents
-- **[Security Hardening](./SECURITY.md)** - Best practices and configuration
-- **[Example Workflows](./examples/workflows/)** - Ready-to-use N8N workflows
-
----
-
-## 🎯 Use Cases
-
-### 1. **Self-Healing Infrastructure**
-Autonomous incident detection and resolution using dual-LLM consensus with human-in-the-loop validation.
-
-### 2. **Voice-Enabled Customer Audits**
-Telegram-based conversational audits with STT (Faster-Whisper) + LLM analysis.
-
-### 3. **Document Processing Pipeline**
-PDF invoice extraction with local LLM parsing and PostgreSQL storage (100% GDPR compliant).
-
----
-
-## 🔌 MCP Integration Highlights
-
-Control your entire infrastructure from **Claude Desktop** via Model Context Protocol:
-
-**VPS MCP Tools:**
+### VPS MCP Server (Remote Control)
+Control your infrastructure from Claude Desktop:
 - `execute_command` - Run SSH commands
 - `list_docker_containers` - Monitor containers
 - `check_docker_logs` - Debug services
@@ -219,24 +141,25 @@ Control your entire infrastructure from **Claude Desktop** via Model Context Pro
 - `diagnose_vps` - Full system health check
 - `query_postgres` - Database queries
 
-**AuraCore MCP Tools:** (see [AURACORE-MCP.md](./AURACORE-MCP.md))
+### AuraCore MCP (Local - Claude Desktop)
+Project and context management for AI agents:
 - Project management (create, list, update)
 - Context storage (business rules, patterns, conventions)
-- Task management with dependencies
-- Session memory (remember/recall)
-- Decision logging for traceability
+- Task tracking with priorities and dependencies
+- Session memory (key-value store with TTL)
+- Decision logging (anti-hallucination audit trail)
 
-👉 **[Full MCP Setup Guide](./MCP-GUIDE.md)**
+See **[AURACORE-MCP.md](./AURACORE-MCP.md)** for full AuraCore documentation.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | **Orchestration** | N8N (Queue Mode) | Workflow automation |
-| **LLM Inference** | Ollama + Qwen 2.5 + Phi-3 | Local AI reasoning |
-| **Consensus** | AuraCore API | Dual-LLM validation |
+| **LLM Inference** | Ollama + Qwen 2.5 + Phi-3 | Local AI reasoning + validation |
+| **Consensus** | AuraCore API | Double LLM validation |
 | **Vector DB** | Qdrant | Semantic search & RAG |
 | **Database** | PostgreSQL 16 | Workflow persistence |
 | **Queue** | Redis 7 | Distributed task queue |
@@ -245,7 +168,7 @@ Control your entire infrastructure from **Claude Desktop** via Model Context Pro
 
 ---
 
-## 📊 System Requirements
+## System Requirements
 
 **Minimum:**
 - 8 vCPUs
@@ -261,27 +184,46 @@ Control your entire infrastructure from **Claude Desktop** via Model Context Pro
 
 ---
 
-## 🤝 Contributing
+## Quick Start
 
-Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/AuraStackAI-Agency/VPS-debian.git
+cd VPS-debian
+```
+
+### 2. Configure Environment
+```bash
+cp examples/.env.example .env
+nano .env
+```
+
+### 3. Deploy the Stack
+```bash
+docker-compose -f examples/docker-compose.example.yml up -d
+```
+
+### 4. Pull LLM Models
+```bash
+ollama pull qwen2.5-coder:3b-instruct-q4_K_M
+ollama pull phi3:mini
+```
 
 ---
 
-## 📄 License
+## Documentation
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
----
-
-## 🔗 Resources
-
-- [N8N Documentation](https://docs.n8n.io/)
-- [Ollama Models](https://ollama.ai/library)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-- [Qdrant Vector Database](https://qdrant.tech/)
+- **[AURACORE-MCP.md](./AURACORE-MCP.md)** - AuraCore MCP Server documentation
+- **[MCP-GUIDE.md](./MCP-GUIDE.md)** - VPS MCP integration guide
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Detailed system design
+- **[SECURITY.md](./SECURITY.md)** - Security hardening guide
 
 ---
 
-**Built with ❤️ for AI Infrastructure Enthusiasts**
+## License
 
-> Want to discuss advanced use cases? Open an issue or start a discussion!
+MIT License - see [LICENSE](./LICENSE)
+
+---
+
+**Built with care for AI Infrastructure**
