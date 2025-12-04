@@ -2,7 +2,7 @@
 
 > **Production-Ready Infrastructure Template for Self-Hosted AI Agents**
 
-Deploy autonomous AI workflows with N8N orchestration, local LLMs (Ollama/Qwen), vector storage (Qdrant), and Model Context Protocol (MCP) integration — all running on your own infrastructure.
+Deploy autonomous AI workflows with N8N orchestration, local LLMs (Ollama/Qwen/Phi-3), vector storage (Qdrant), and Model Context Protocol (MCP) integration — all running on your own infrastructure.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
@@ -18,7 +18,7 @@ Deploy autonomous AI workflows with N8N orchestration, local LLMs (Ollama/Qwen),
 - On-premise workflow execution
 
 ### Cost Efficiency
-- Zero API costs for inference (Ollama/Qwen)
+- Zero API costs for inference (Ollama/Qwen/Phi-3)
 - Predictable infrastructure expenses
 - Scalable worker architecture
 
@@ -50,8 +50,14 @@ graph TB
     subgraph "AI Inference Layer"
         OLLAMA[Ollama Server]
         QWEN[Qwen 2.5 Coder 3B]
-        MISTRAL[Mistral 7B]
+        PHI3[Phi-3 Mini 3.8B]
         LLAVA[LLaVA Vision]
+    end
+    
+    subgraph "AuraCore Consensus Engine"
+        AURACORE[AuraCore API]
+        DIAGNOSIS[Qwen Diagnosis]
+        VALIDATION[Phi-3 Validation]
     end
     
     subgraph "Data Layer"
@@ -60,8 +66,8 @@ graph TB
     end
     
     subgraph "MCP Integration"
-        MCP_LOCAL[Local MCP Servers]
-        MCP_REMOTE[Remote MCP Wrapper]
+        MCP_VPS[VPS MCP Server]
+        MCP_LOCAL[AuraCore MCP Local]
     end
     
     TG --> N8N_MAIN
@@ -72,21 +78,25 @@ graph TB
     REDIS --> N8N_W1
     REDIS --> N8N_W2
     
-    N8N_W1 --> OLLAMA
-    N8N_W2 --> OLLAMA
+    N8N_W1 --> AURACORE
+    AURACORE --> DIAGNOSIS
+    AURACORE --> VALIDATION
+    DIAGNOSIS --> QWEN
+    VALIDATION --> PHI3
+    
+    OLLAMA --> QWEN
+    OLLAMA --> PHI3
+    OLLAMA --> LLAVA
+    
     N8N_MAIN --> PG
     N8N_W1 --> QDRANT
     
-    OLLAMA --> QWEN
-    OLLAMA --> MISTRAL
-    OLLAMA --> LLAVA
-    
-    QWEN --> MCP_LOCAL
-    MCP_REMOTE -.SSH.-> N8N_MAIN
+    MCP_VPS -.SSH.-> N8N_MAIN
     
     style N8N_MAIN fill:#4CAF50
     style OLLAMA fill:#FF9800
-    style MCP_LOCAL fill:#2196F3
+    style AURACORE fill:#9C27B0
+    style MCP_VPS fill:#2196F3
 ```
 
 ---
@@ -98,10 +108,17 @@ graph TB
 - Horizontal scaling with multiple workers
 - PostgreSQL for workflow persistence
 
-### 🤖 Local LLM Inference
-- Ollama server with multiple models (Qwen, Mistral, LLaVA)
+### 🤖 Local LLM Inference (Dual Model)
+- **Qwen 2.5 Coder 3B** - Primary diagnostic model (code-optimized)
+- **Phi-3 Mini 3.8B** - Validation model (reasoning-optimized)
 - CPU-optimized for cost-effective deployment
 - No external API dependencies
+
+### 🧠 AuraCore Consensus Engine
+- Dual-LLM validation for infrastructure decisions
+- JSON-structured communication between models
+- Confidence scoring and risk assessment
+- Auto-execute safe actions, escalate risky ones
 
 ### 🧠 Vector Memory (RAG)
 - Qdrant vector database for embeddings
@@ -110,8 +127,9 @@ graph TB
 
 ### 🔌 Model Context Protocol (MCP)
 - Remote VPS control from Claude Desktop
-- Local MCP servers for AI agents (Filesystem, Memory, Sequential Thinking)
+- Local MCP servers for AI agents
 - N8N workflow automation via MCP
+- **AuraCore MCP** for project/context management
 
 ### 🛡️ Security Hardening
 - Automated security setup script
@@ -135,8 +153,8 @@ graph TB
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/AuraStackAI-Agency/local-llm-automation-stack.git
-cd local-llm-automation-stack
+git clone https://github.com/AuraStackAI-Agency/VPS-debian.git
+cd VPS-debian
 ```
 
 ### 2. Configure Environment
@@ -169,6 +187,7 @@ sudo ./scripts/setup_automated_backups.sh
 
 - **[Architecture Deep Dive](./ARCHITECTURE.md)** - Detailed system design
 - **[MCP Integration Guide](./MCP-GUIDE.md)** - Remote VPS control from Claude Desktop
+- **[AuraCore MCP Guide](./AURACORE-MCP.md)** - Project & context management for AI agents
 - **[Security Hardening](./SECURITY.md)** - Best practices and configuration
 - **[Example Workflows](./examples/workflows/)** - Ready-to-use N8N workflows
 
@@ -177,7 +196,7 @@ sudo ./scripts/setup_automated_backups.sh
 ## 🎯 Use Cases
 
 ### 1. **Self-Healing Infrastructure**
-Autonomous incident detection and resolution using local LLMs with human-in-the-loop validation.
+Autonomous incident detection and resolution using dual-LLM consensus with human-in-the-loop validation.
 
 ### 2. **Voice-Enabled Customer Audits**
 Telegram-based conversational audits with STT (Faster-Whisper) + LLM analysis.
@@ -191,7 +210,7 @@ PDF invoice extraction with local LLM parsing and PostgreSQL storage (100% GDPR 
 
 Control your entire infrastructure from **Claude Desktop** via Model Context Protocol:
 
-**Available Tools:**
+**VPS MCP Tools:**
 - `execute_command` - Run SSH commands
 - `list_docker_containers` - Monitor containers
 - `check_docker_logs` - Debug services
@@ -199,6 +218,13 @@ Control your entire infrastructure from **Claude Desktop** via Model Context Pro
 - `check_system_resources` - Monitor CPU/RAM
 - `diagnose_vps` - Full system health check
 - `query_postgres` - Database queries
+
+**AuraCore MCP Tools:** (see [AURACORE-MCP.md](./AURACORE-MCP.md))
+- Project management (create, list, update)
+- Context storage (business rules, patterns, conventions)
+- Task management with dependencies
+- Session memory (remember/recall)
+- Decision logging for traceability
 
 👉 **[Full MCP Setup Guide](./MCP-GUIDE.md)**
 
@@ -209,7 +235,8 @@ Control your entire infrastructure from **Claude Desktop** via Model Context Pro
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | **Orchestration** | N8N (Queue Mode) | Workflow automation |
-| **LLM Inference** | Ollama + Qwen 2.5 | Local AI reasoning |
+| **LLM Inference** | Ollama + Qwen 2.5 + Phi-3 | Local AI reasoning |
+| **Consensus** | AuraCore API | Dual-LLM validation |
 | **Vector DB** | Qdrant | Semantic search & RAG |
 | **Database** | PostgreSQL 16 | Workflow persistence |
 | **Queue** | Redis 7 | Distributed task queue |
